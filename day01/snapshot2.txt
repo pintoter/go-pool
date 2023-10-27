@@ -1,0 +1,5 @@
+/etc/stove/config.xml
+/Users/baker/recipes/database_version3.yaml
+/var/log/orders.log
+/s21/Day00/src
+/s21/Day01/src
