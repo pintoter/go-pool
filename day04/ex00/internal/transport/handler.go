@@ -18,6 +18,7 @@ func NewHandler() *Handler {
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[%s] %s", r.Method, r.URL)
+
 	if r.Method == http.MethodPost {
 		if r.URL.Path == "/buy_candy" {
 			h.buyCandyHandler(w, r)

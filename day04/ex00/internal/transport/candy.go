@@ -8,6 +8,8 @@ import (
 	"net/http"
 )
 
+const buyCandyPath = "/buy_candy"
+
 type buyCandyInput struct {
 	Money int64  `json:"money"`
 	Type  string `json:"candyType"`
@@ -17,7 +19,7 @@ type buyCandyInput struct {
 func (h *Handler) buyCandyHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		if r.URL.Path == "/buy_candy" {
+		if r.URL.Path == buyCandyPath {
 			var input buyCandyInput
 
 			if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -35,7 +37,6 @@ func (h *Handler) buyCandyHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			newResponseSuccess(w, r, http.StatusCreated, money)
-			w.Write([]byte("\n"))
 		} else {
 			http.Error(w, "page is not exist", http.StatusNotFound)
 		}
