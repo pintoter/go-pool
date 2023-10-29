@@ -18,7 +18,7 @@ type buyCandyErrorResponse struct {
 const thank = "Thank you!"
 
 func newResponseSuccess(w http.ResponseWriter, r *http.Request, statusCode int, change int64) {
-	log.Printf("[%s] %s - SOLD", r.Method, r.URL.Path)
+	log.Printf("[%s] %s - Response: SOLD", r.Method, r.URL.Path)
 
 	resp, _ := json.Marshal(buyCandyResponse{
 		Change:  change,
@@ -31,7 +31,7 @@ func newResponseSuccess(w http.ResponseWriter, r *http.Request, statusCode int, 
 }
 
 func newResponseError(w http.ResponseWriter, r *http.Request, statusCode int, err string) {
-	log.Printf("[%s] %s - Error: %s", r.Method, r.URL.Path, err)
+	log.Printf("[%s] %s - Response: Error: %s", r.Method, r.URL.Path, err)
 
 	resp, _ := json.Marshal(buyCandyErrorResponse{
 		Error: err,

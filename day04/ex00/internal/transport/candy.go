@@ -25,11 +25,13 @@ func (h *Handler) buyCandyHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			money, err := h.service.Buy(input.Type, input.Count, input.Money)
-
-			if errors.Is(err, entity.ErrorInInputData) {
-				newResponseError(w, r, http.StatusBadRequest, err.Error())
-			} else if errors.Is(err, entity.NotEnoughMoney) {
-				newResponseError(w, r, http.StatusPaymentRequired, fmt.Sprintf(err.Error(), money))
+			if err != nil {
+				if errors.Is(err, entity.ErrorInInputData) {
+					newResponseError(w, r, http.StatusBadRequest, err.Error())
+				} else if errors.Is(err, entity.NotEnoughMoney) {
+					newResponseError(w, r, http.StatusPaymentRequired, fmt.Sprintf(err.Error(), money))
+				}
+				return
 			}
 
 			newResponseSuccess(w, r, http.StatusCreated, money)
