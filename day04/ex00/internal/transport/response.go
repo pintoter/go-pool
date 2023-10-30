@@ -1,9 +1,15 @@
 package transport
 
+// #cgo CFLAGS: -Iinternal/transport
+// #cgo LDFLAGS: internal/transport/cow_say.a
+// #include <cow_say.h>
+import "C"
+
 import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"unsafe"
 )
 
 type buyCandyResponse struct {
@@ -20,9 +26,15 @@ const thank = "Thank you!"
 func newResponseSuccess(w http.ResponseWriter, r *http.Request, statusCode int, change int64) {
 	log.Printf("[%s] %s - Response: SOLD", r.Method, r.URL.Path)
 
+	mes := C.CString(thank)
+	defer C.free(unsafe.Pointer(mes))
+
+	cowSay := C.ask_cow(mes)
+	defer C.free(unsafe.Pointer(cowSay))
+
 	resp, _ := json.Marshal(buyCandyResponse{
 		Change:  change,
-		Message: thank,
+		Message: C.GoString(cowSay),
 	})
 
 	w.Header().Set("Content-Type", "application/json")
