@@ -1,0 +1,15 @@
+version: "3.7"
+services:
+  es01:
+    image: "docker.elastic.co/elasticsearch/elasticsearch:8.10.4"
+    ports:
+      - "9200:9200"
+    volumes:
+      - "es-data-es01:/Users/meine/Desktop/Sber21/Go_Day03-1/materials"
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:9200"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+volumes:
+  es-data-es01:
