@@ -9,7 +9,7 @@ runtls:
 		./candy-server -tls
 
 runclient:
-		./candy-client -k AA -c 0 -m 30
+		./candy-client -k AA -c 2 -m 30
 
 clean:
 		rm candy-clint candy-server
