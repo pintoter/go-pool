@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<head> 
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Main page</title>
+</head>
+<body>
+  <h1>Main page</h1>
+  <h5>Total: {{.Total}}</h5>
+  <ul>
+    {{ range .Places }}
+      <li>
+        <div>{{.Name}}</div>
+        <div>{{.Address}}</div>
+        <div>{{.Phone}}</div>
+      </li>
+    {{ end }}
+  </ul>
+{{ if (gt .PageNum 1) }}
+<a href={{ printf "/places?page=%d" .PrevPage }}>Previous</a> # изменить на PageNum-1
+{{ end }}
+{{ if (lt .PageNum 1365) }}
+<a href={{ printf "/places?page=%d" .NextPage }}>Next</a>
+{{ end }}
+{{ if (eq .PageNum 1365) }}
+<a href="/places?page=1">First</a>
+{{ else }}
+<a href="/places?page=1365">Last</a>
+{{ end }}
+</body>
