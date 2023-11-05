@@ -8,13 +8,14 @@ import (
 
 type Places interface {
 	GetPlaces(limit int, offset int) ([]entity.Place, int, error)
+	GetClosestPlace(lat, lon float64) ([]entity.Place, error)
 }
 
 type Repository struct {
 	Places
 }
 
-func NewRepository(es *elasticsearch.Client) *Repository {
+func New(es *elasticsearch.Client) *Repository {
 	return &Repository{
 		Places: NewPlacesRepository(es),
 	}

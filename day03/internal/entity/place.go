@@ -1,6 +1,7 @@
 package entity
 
 type Place struct {
+	ID       string   `json:"id,omitempty"`
 	Name     string   `json:"name"`
 	Address  string   `json:"address"`
 	Phone    string   `json:"phone"`
@@ -8,6 +9,6 @@ type Place struct {
 }
 
 type GeoPoint struct {
-	Longitude string `json:"lon"`
 	Latitude  string `json:"lat"`
+	Longitude string `json:"lon"`
 }

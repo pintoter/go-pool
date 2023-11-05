@@ -6,15 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/elastic/go-elasticsearch/v7"
 )
-
-// var settings = `{
-// 	"index" : {
-// 			"max_result_window" : 20000
-// 	}
-// }`
 
 type PlacesRepository struct {
 	es *elasticsearch.Client
@@ -26,7 +21,7 @@ func NewPlacesRepository(es *elasticsearch.Client) *PlacesRepository {
 	}
 }
 
-type searchResponseParams struct {
+type searchRequestParams struct {
 	Took    float64 `json:"took"`
 	Timeout bool    `json:"timed_out"`
 	Shards  struct {
@@ -51,34 +46,38 @@ type searchResponseParams struct {
 }
 
 func (p *PlacesRepository) GetPlaces(limit int, offset int) ([]entity.Place, int, error) {
+	// 	settings := `{
+	//     "size" : 20000
+	// }`
+
+	// 	resp, err := esapi.SearchRequest{
+	// 		Index: []string{"places"},
+	// 		Body:  strings.NewReader(settings),
+	// 	}.Do(context.Background(), p.es)
+	// 	if err != nil {
+	// 		return nil, 0, err
+	// 	}
+	// 	defer resp.Body.Close()
+
 	resp, err := p.es.Search(
-		p.es.Search.WithContext(context.Background()), // change ctx.Background() for ctx
+		p.es.Search.WithContext(context.Background()),
 		p.es.Search.WithIndex("places"),
 		p.es.Search.WithFrom(offset),
 		p.es.Search.WithSize(limit),
 	)
 	if err != nil {
-		log.Println(err, "error in searching")
 		return nil, 0, err
 	}
 	defer resp.Body.Close()
 
-	var body []byte
-	_, err = resp.Body.Read(body)
-	if err != nil {
-		log.Println(err, "error in searching")
-		return nil, 0, err
-	}
-
-	var respParams searchResponseParams
+	var respParams searchRequestParams
 	err = json.NewDecoder(resp.Body).Decode(&respParams)
 	if err != nil {
-		log.Println(err, "error in decoding")
 		return nil, 0, err
 	}
 
 	var places []entity.Place
-	fmt.Println("Resp.Hit", respParams.Hits.Total.Value)
+	// log.Println("Resp.Hit", respParams.Hits.Total.Value)
 	if respParams.Hits.Total.Value > 0 {
 		for _, hit := range respParams.Hits.Hits {
 			if hit.Source == nil {
@@ -89,7 +88,65 @@ func (p *PlacesRepository) GetPlaces(limit int, offset int) ([]entity.Place, int
 		}
 	}
 
-	fmt.Println(places)
-
 	return places, int(respParams.Hits.Total.Value), nil
+}
+
+func (p *PlacesRepository) GetClosestPlace(lat, lon float64) ([]entity.Place, error) {
+	query := `{
+		"from": ` + fmt.Sprintf("%d", 0) + `,
+		"size": ` + fmt.Sprintf("%d", 3) + `,
+		"sort": [
+				{
+						"_geo_distance": {
+								"location": {
+										"lat": ` + fmt.Sprintf("%f", lat) + `,
+										"lon": ` + fmt.Sprintf("%f", lon) + `
+								},
+								"order": "asc",
+								"unit": "km",
+								"mode": "min",
+								"distance_type": "arc",
+								"ignore_unmapped": true
+						}
+				}
+		]
+}`
+	res, err := p.es.Search(
+		p.es.Search.WithContext(context.Background()),
+		p.es.Search.WithIndex("places"),
+		p.es.Search.WithBody(strings.NewReader(query)),
+		p.es.Search.WithSize(3),
+	)
+	if err != nil {
+		log.Printf("Error executing the search request: %s", err)
+	}
+
+	var respParams searchRequestParams
+	err = json.NewDecoder(res.Body).Decode(&respParams)
+	if err != nil {
+		return nil, err
+	}
+
+	var places []entity.Place
+	// log.Println("Resp.Hit", respParams.Hits.Total.Value)
+	if respParams.Hits.Total.Value > 0 {
+		for _, hit := range respParams.Hits.Hits {
+			if hit.Source == nil {
+				log.Printf("hit with %s have nil Source", hit.Id)
+				continue
+			}
+
+			var place entity.Place
+			place.ID = hit.Id
+			place.Name = hit.Source.Name
+			place.Address = hit.Source.Address
+			place.Phone = hit.Source.Phone
+			place.Location.Latitude = hit.Source.Location.Latitude
+			place.Location.Longitude = hit.Source.Location.Longitude
+
+			places = append(places, place)
+		}
+	}
+
+	return places, nil
 }

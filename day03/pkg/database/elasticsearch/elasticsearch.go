@@ -15,12 +15,11 @@ import (
 
 	"github.com/elastic/go-elasticsearch/v7"
 	"github.com/elastic/go-elasticsearch/v7/esapi"
-	"github.com/elastic/go-elasticsearch/v7/estransport"
 	"github.com/elastic/go-elasticsearch/v7/esutil"
 )
 
 const (
-	file    = "../materials/data.csv"
+	file    = "./config/data.csv"
 	index   = "places"
 	mapping = `{
 	"mappings": {
@@ -41,9 +40,7 @@ const (
 	}
 }`
 	settings = `{
-	"index" : {
-			"max_result_window" : 20000
-	}
+	"index.max_result_window" : 20000
 }`
 )
 
@@ -61,14 +58,31 @@ func New(address string) (*elasticsearch.Client, error) {
 		Username:               ESUsername,
 		Password:               ESPW,
 		CertificateFingerprint: ESFingerPrint,
-		Logger: &estransport.ColorLogger{
-			Output:             os.Stdout,
-			EnableRequestBody:  true,
-			EnableResponseBody: true,
-		},
+		// Logger: &estransport.ColorLogger{
+		// 	Output:             os.Stdout,
+		// 	EnableRequestBody:  true,
+		// 	EnableResponseBody: true,
+		// },
 	}
 
 	es, err := elasticsearch.NewClient(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check ES for existing index
+
+	// resp, err := esapi.IndicesPutSettingsRequest{
+	// 	Index: []string{"places"},
+	// 	Body:  strings.NewReader(settings),
+	// }.Do(context.Background(), es)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// defer resp.Body.Close()
+
+	err = UpdateMaxResultSettings(es)
+	LoadData(es)
 	if err != nil {
 		return nil, err
 	}
@@ -81,15 +95,17 @@ func UpdateMaxResultSettings(es *elasticsearch.Client) error {
 		Index: []string{"places"},
 		Body:  strings.NewReader(settings),
 	}.Do(context.Background(), es)
-	defer resp.Body.Close()
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	return nil
 }
 
-func LoadData(ctx context.Context, es *elasticsearch.Client) {
+func LoadData(es *elasticsearch.Client) {
+	ctx := context.Background()
+
 	resp, err := esapi.IndicesExistsRequest{
 		Index: []string{index},
 	}.Do(ctx, es)
@@ -162,12 +178,6 @@ func LoadData(ctx context.Context, es *elasticsearch.Client) {
 			Action:     "index",
 			DocumentID: line[0],
 			Body:       bytes.NewReader(record),
-			// OnSuccess: func(ctx context.Context, item esutil.BulkIndexerItem, respb esutil.BulkIndexerResponseItem) {
-			// 	log.Println("successfully added new item:", item, respb)
-			// },
-			// OnFailure: func(ctx context.Context, item esutil.BulkIndexerItem, respb esutil.BulkIndexerResponseItem, err error) {
-			// 	log.Println("failed to add new item:", item, respb, err)
-			// },
 		})
 		if err != nil {
 			log.Println(err)

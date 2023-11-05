@@ -18,7 +18,7 @@
     {{ end }}
   </ul>
 {{ if (gt .PageNum 1) }}
-<a href={{ printf "/places?page=%d" .PrevPage }}>Previous</a> # изменить на PageNum-1
+<a href={{ printf "/places?page=%d" .PrevPage }}>Previous</a>
 {{ end }}
 {{ if (lt .PageNum 1365) }}
 <a href={{ printf "/places?page=%d" .NextPage }}>Next</a>

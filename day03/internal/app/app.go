@@ -1,14 +1,19 @@
 package app
 
 import (
-	"Day03/internal/entity"
 	"Day03/internal/repository"
-	"Day03/pkg/database"
+	"Day03/internal/server"
+	"Day03/internal/service"
+	"Day03/internal/transport"
+	database "Day03/pkg/database/elasticsearch"
 	"context"
-	"html/template"
+	"errors"
 	"log"
 	"net/http"
-	"strconv"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 var (
@@ -16,81 +21,43 @@ var (
 	ESPW          = "Wqy0O9nLa8HCHZ*7MHLA"
 	ESFingerPrint = "7140373329f32249e4775f12a8d4e35f5f2b2c390f4677aaf4f4b7c48c469ee9"
 	address       = "http://localhost:9200"
-	serveradr     = "127.0.0.1:8888"
+	host          = "127.0.0.1"
+	port          = "8888"
 )
 
-type responsePlaces struct {
-	PageNum  int
-	PrevPage int
-	NextPage int
-	Total    int64
-	Places   []entity.Place
-}
-
 func Run() {
-	ctx := context.Background()
-
 	es, err := database.New(address)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Check ES for existing index
-	database.LoadData(ctx, es)
-	err = database.UpdateMaxResultSettings(es)
-	if err != nil {
-		log.Println("error with update settings to 20k", err)
-	}
-
-	repo := repository.NewPlacesRepository(es)
-
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/places", func(w http.ResponseWriter, r *http.Request) {
-		query := r.URL.Query().Get("page")
-
-		var pageNumber int = 1
-		if query != "" {
-			pageNumber, err := strconv.Atoi(query)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			if pageNumber < 1 || pageNumber > 1365 {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-		}
-
-		places, count, err := repo.GetPlaces(10, (pageNumber-1)*10)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
-		var resp responsePlaces
-		resp.PageNum = pageNumber
-		resp.PrevPage = pageNumber - 1
-		resp.NextPage = pageNumber + 1
-		resp.Total = int64(count)
-		resp.Places = places
-
-		template, err := template.ParseFiles("./web/templates/templates.html")
-		if err != nil {
-			log.Println("error with parsing template", err)
-		}
-
-		template.Execute(w, resp)
+	services := service.New(service.Deps{
+		Repos: repository.New(es),
 	})
 
-	err = http.ListenAndServe(serveradr, mux)
+	handler := transport.NewHandler(services)
+
+	server := server.New(handler, host, port)
+	go func() {
+		err := server.Run()
+		if !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Server ListenAndServe: %v", err)
+		}
+		log.Println("Server successfully stopped")
+	}()
+
+	quitChan := make(chan os.Signal)
+	signal.Notify(quitChan, syscall.SIGTERM, syscall.SIGINT)
+	quitSig := <-quitChan
+
+	log.Println("Graceful shutdown starter with signal:", quitSig)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err = server.Stop(ctx)
 	if err != nil {
-		log.Println("error when runnig server", err)
+		log.Printf("Server shutdown failed:%v", err)
 	}
-
-	// html/template
+	log.Println("Graceful shutdown completed")
 }
-
-// TODO: 1) total 13650
-// 2) порядок выдачи результатов
