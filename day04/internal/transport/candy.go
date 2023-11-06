@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"day04/ex00/internal/entity"
+	"day04/internal/entity"
 	"encoding/json"
 	"errors"
 	"fmt"

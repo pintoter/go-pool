@@ -1,8 +1,8 @@
 package server
 
 import (
-	"day04/ex00/internal/transport"
-	"day04/ex00/utils"
+	"day04/internal/transport"
+	"day04/utils"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,7 +21,7 @@ func New(host, port string) *Server {
 	return &Server{
 		httpServer: &http.Server{
 			Addr:    fmt.Sprintf("%s:%s", host, port),
-			Handler: transport.NewHandler(),
+			Handler: ,
 		},
 	}
 }

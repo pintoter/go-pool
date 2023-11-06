@@ -2,7 +2,7 @@ package main
 
 import (
 	"crypto/x509"
-	"day04/ex00/utils"
+	"day04/utils"
 	"encoding/json"
 	"flag"
 	"fmt"

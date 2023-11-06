@@ -1,7 +1,7 @@
 package app
 
 import (
-	"day04/ex00/internal/server"
+	"day04/internal/server"
 	"log"
 )
 
@@ -11,6 +11,12 @@ const (
 )
 
 func Run(isSecure bool) error {
+	// Need service constructor
+
+	// Need handler constructor
+
+	// Refactor server
+
 	server := server.New(host, port)
 	if !isSecure {
 		if err := server.Run(); err != nil {

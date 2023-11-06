@@ -1,7 +1,7 @@
 package main
 
 import (
-	"day04/ex00/internal/app"
+	"day04/internal/app"
 	"flag"
 	"log"
 )

@@ -1,6 +1,6 @@
 package service
 
-import "day04/ex00/internal/entity"
+import "day04/internal/entity"
 
 var candyMenu = map[string]int64{
 	"CE": 10,
