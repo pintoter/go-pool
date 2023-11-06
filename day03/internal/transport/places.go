@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 const (
@@ -100,9 +103,27 @@ func (h *Handler) getClosestPlacesHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+/*
+for check JWT: curl -H "Authorization: Bearer
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNjk5Mjk0NzI0LCJuYW1lIjoiTmlrb2xheSJ9.QYjub2UeYbNkKdW_kp4A87A_UBgl7KYSQyybdVzJ_60"
+-XGET "http://127.0.0.1:8888/api/recommend?lat=55.674&lon=37.666"
+*/
+
 func (h *Handler) getJwtTokenHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-		
+		var SignedKey = []byte(SECRET)
+
+		token := jwt.New(jwt.SigningMethodHS256)
+
+		token.Claims = jwt.MapClaims{
+			"admin": true,
+			"name":  "Nikolay",
+			"exp":   time.Now().Add(120 * time.Second).Unix(),
+		}
+
+		generatedToken, _ := token.SignedString(SignedKey)
+
+		newTokenResponse(w, generatedToken)
 	} else {
 		newErrorResponse(w, r, http.StatusBadRequest, "not implemented method")
 	}

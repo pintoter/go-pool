@@ -26,8 +26,12 @@ type getPlacesJsonResponse struct {
 }
 
 type getRecomendPlacesResponse struct {
-	Name     string         `json:"name"`
-	Places   []entity.Place `json:"places"`
+	Name   string         `json:"name"`
+	Places []entity.Place `json:"places"`
+}
+
+type getTokenResponse struct {
+	Token string `json:"token"`
 }
 
 type getPlacesErrorResponse struct {
@@ -53,9 +57,9 @@ func newPlacesWithTemplateResponse(w http.ResponseWriter, places []entity.Place,
 func newErrorResponse(w http.ResponseWriter, r *http.Request, statusCode int, message string) {
 	log.Printf("[%s] %s - Response: Error: %s", r.Method, r.URL.Path, message)
 
-	resp, _ := json.Marshal(getPlacesErrorResponse{
+	resp, _ := json.MarshalIndent(getPlacesErrorResponse{
 		Error: message,
-	})
+	}, "", "\t")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
@@ -99,5 +103,19 @@ func newRecomendPlacesResponse(w http.ResponseWriter, places []entity.Place) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
+}
+
+func newTokenResponse(w http.ResponseWriter, token string) {
+	var data getTokenResponse
+	data.Token = token
+
+	resp, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		log.Println("problem with marshalling places", err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	w.Write(resp)
 }

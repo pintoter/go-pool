@@ -1,9 +1,18 @@
 package transport
 
 import (
+	"Day03/internal/entity"
 	"Day03/internal/service"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
+
+	"github.com/dgrijalva/jwt-go"
+)
+
+const (
+	SECRET = "secret_key"
 )
 
 type Handler struct {
@@ -26,7 +35,24 @@ func NewHandler(service *service.Service) *Handler {
 	})
 
 	handler.mux.HandleFunc("/api/recommend", func(w http.ResponseWriter, r *http.Request) {
-		handler.getClosestPlacesHandler(w, r)
+		authHeader := strings.Split(r.Header.Get("Authorization"), "Bearer ")
+		if len(authHeader) != 2 {
+			newErrorResponse(w, r, http.StatusUnauthorized, entity.UnauthorizedToken.Error())
+		} else {
+			jwtToken := authHeader[1]
+			token, _ := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(SECRET), nil
+			})
+
+			if _, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+				handler.getClosestPlacesHandler(w, r)
+			} else {
+				newErrorResponse(w, r, http.StatusUnauthorized, entity.UnauthorizedToken.Error())
+			}
+		}
 	})
 
 	handler.mux.HandleFunc("/api/get_token", func(w http.ResponseWriter, r *http.Request) {
