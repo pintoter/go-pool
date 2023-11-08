@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"day04/internal/config"
 	"day04/internal/server"
 	"day04/internal/service"
 	"day04/internal/transport"
@@ -14,17 +15,12 @@ import (
 	"time"
 )
 
-var (
-	host = "127.0.0.1"
-	port = "3333"
-)
-
-func Run(isSecure bool) {
+func Run(cfg *config.Config, isSecure bool) {
 	services := service.New()
 
 	handler := transport.NewHandler(services)
 
-	server := server.New(handler, host, port)
+	server := server.New(handler, cfg.Host, cfg.Port)
 
 	go func() {
 		var err error
@@ -32,7 +28,7 @@ func Run(isSecure bool) {
 		if !isSecure {
 			err = server.Run()
 			log.Println("Starting HTTP server")
-		} else if isSecure {
+		} else {
 			err = server.RunTLS()
 			log.Println("Starting HTTPS server")
 		}

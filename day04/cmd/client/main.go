@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	caCertFile = "./cert/minica.pem"
-	certFile   = "./cert/client/cert.pem"
-	keyFile    = "./cert/client/key.pem"
+	caCertFile = "./config/cert/minica.pem"
+	certFile   = "./config/cert/client/cert.pem"
+	keyFile    = "./config/cert/client/key.pem"
 )
 
 var (

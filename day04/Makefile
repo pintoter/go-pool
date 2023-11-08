@@ -1,6 +1,6 @@
 build:
 		go build -o candy-server ./cmd/app/main.go
-		go build -o candy-client ./client/main.go
+		go build -o candy-client ./cmd/client/main.go
 
 run: build
 		./candy-server

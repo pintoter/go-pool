@@ -2,6 +2,7 @@ package main
 
 import (
 	"day04/internal/app"
+	"day04/internal/config"
 	"flag"
 )
 
@@ -13,5 +14,7 @@ func init() {
 }
 
 func main() {
-	app.Run(isSecure)
+	cfg := config.Get()
+
+	app.Run(cfg, isSecure)
 }

@@ -3,6 +3,8 @@ package config
 import (
 	"log"
 	"sync"
+
+	"github.com/ilyakaznacheev/cleanenv"
 )
 
 const (
@@ -10,19 +12,21 @@ const (
 )
 
 type Config struct {
-	BindIP string `yaml:"bind_ip"`
-	Port   string `yaml:"port"`
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
 }
 
-var instance *Config
+var config = new(Config)
 var once sync.Once
 
 func Get() *Config {
 	once.Do(func() {
 		log.Println("reading app configuration")
-		instance = &Config{}
 
-		err := cleanenv. // dowload cleanenv
+		err := cleanenv.ReadConfig(configPath, config)
+		if err != nil {
+			log.Fatal(err)
+		}
 	})
-	return &Config{}
+	return config
 }
