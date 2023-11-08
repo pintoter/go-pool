@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	certFile = "./cert/localhost/cert.pem"
-	keyFile  = "./cert/localhost/key.pem"
+	certFile = "./config/cert/localhost/cert.pem"
+	keyFile  = "./config/cert/localhost/key.pem"
 )
 
 type Server struct {

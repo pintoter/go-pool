@@ -9,7 +9,7 @@ runtls: build
 		./candy-server -tls
 
 runclient:
-		./candy-client -k AA -c 2 -m 30 -path https://127.0.0.1:3333/buy_candy
+		./candy-client -k AA -c 2 -m 30 -path https://candy.tld:3333/buy_candy
 
 clean:
 		rm candy-clint candy-server
