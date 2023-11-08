@@ -22,6 +22,7 @@ const (
 var (
 	money, count int64
 	candyType    string
+	path         string
 )
 
 type requestBody struct {
@@ -34,6 +35,7 @@ func init() {
 	flag.Int64Var(&money, "m", 0, "money")
 	flag.Int64Var(&count, "c", 0, "candy's count")
 	flag.StringVar(&candyType, "k", "", "candy's type")
+	flag.StringVar(&path, "path", "", "server adress")
 	flag.Parse()
 }
 
@@ -64,7 +66,7 @@ func main() {
 		CandyCount: count,
 	})
 
-	resp, err := client.Post("https://127.0.0.1:3333/buy_candy", "application/json", strings.NewReader(string(reqBody)))
+	resp, err := client.Post(path, "application/json", strings.NewReader(string(reqBody)))
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,7 +1,7 @@
 package server
 
 import (
-	"day04/internal/transport"
+	"context"
 	"day04/utils"
 	"fmt"
 	"log"
@@ -17,11 +17,11 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func New(host, port string) *Server {
+func New(handler http.Handler, host, port string) *Server {
 	return &Server{
 		httpServer: &http.Server{
 			Addr:    fmt.Sprintf("%s:%s", host, port),
-			Handler: ,
+			Handler: handler,
 		},
 	}
 }
@@ -37,6 +37,6 @@ func (s *Server) RunTLS() error {
 	return s.httpServer.ListenAndServeTLS("", "")
 }
 
-func (s *Server) Stop() error {
-	return s.httpServer.Close()
+func (s *Server) Stop(ctx context.Context) error {
+	return s.httpServer.Shutdown(ctx)
 }
