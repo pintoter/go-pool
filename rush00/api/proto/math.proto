@@ -5,7 +5,7 @@ package pkg;
 option go_package = ".;pb";
 
 service Generator {
-  rpc GetGenerateData(DataRequest) returns (stream DataResponse);
+  rpc GetData(DataRequest) returns (DataResponse);
  }
 
 message DataRequest {

@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GeneratorClient interface {
-	GetGenerateData(ctx context.Context, in *DataRequest, opts ...grpc.CallOption) (Generator_GetGenerateDataClient, error)
+	GetData(ctx context.Context, in *DataRequest, opts ...grpc.CallOption) (*DataResponse, error)
 }
 
 type generatorClient struct {
@@ -33,43 +33,20 @@ func NewGeneratorClient(cc grpc.ClientConnInterface) GeneratorClient {
 	return &generatorClient{cc}
 }
 
-func (c *generatorClient) GetGenerateData(ctx context.Context, in *DataRequest, opts ...grpc.CallOption) (Generator_GetGenerateDataClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Generator_ServiceDesc.Streams[0], "/pkg.Generator/GetGenerateData", opts...)
+func (c *generatorClient) GetData(ctx context.Context, in *DataRequest, opts ...grpc.CallOption) (*DataResponse, error) {
+	out := new(DataResponse)
+	err := c.cc.Invoke(ctx, "/pkg.Generator/GetData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &generatorGetGenerateDataClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Generator_GetGenerateDataClient interface {
-	Recv() (*DataResponse, error)
-	grpc.ClientStream
-}
-
-type generatorGetGenerateDataClient struct {
-	grpc.ClientStream
-}
-
-func (x *generatorGetGenerateDataClient) Recv() (*DataResponse, error) {
-	m := new(DataResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 // GeneratorServer is the server API for Generator service.
 // All implementations must embed UnimplementedGeneratorServer
 // for forward compatibility
 type GeneratorServer interface {
-	GetGenerateData(*DataRequest, Generator_GetGenerateDataServer) error
+	GetData(context.Context, *DataRequest) (*DataResponse, error)
 	mustEmbedUnimplementedGeneratorServer()
 }
 
@@ -77,8 +54,8 @@ type GeneratorServer interface {
 type UnimplementedGeneratorServer struct {
 }
 
-func (UnimplementedGeneratorServer) GetGenerateData(*DataRequest, Generator_GetGenerateDataServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetGenerateData not implemented")
+func (UnimplementedGeneratorServer) GetData(context.Context, *DataRequest) (*DataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetData not implemented")
 }
 func (UnimplementedGeneratorServer) mustEmbedUnimplementedGeneratorServer() {}
 
@@ -93,25 +70,22 @@ func RegisterGeneratorServer(s grpc.ServiceRegistrar, srv GeneratorServer) {
 	s.RegisterService(&Generator_ServiceDesc, srv)
 }
 
-func _Generator_GetGenerateData_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(DataRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _Generator_GetData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(GeneratorServer).GetGenerateData(m, &generatorGetGenerateDataServer{stream})
-}
-
-type Generator_GetGenerateDataServer interface {
-	Send(*DataResponse) error
-	grpc.ServerStream
-}
-
-type generatorGetGenerateDataServer struct {
-	grpc.ServerStream
-}
-
-func (x *generatorGetGenerateDataServer) Send(m *DataResponse) error {
-	return x.ServerStream.SendMsg(m)
+	if interceptor == nil {
+		return srv.(GeneratorServer).GetData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pkg.Generator/GetData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GeneratorServer).GetData(ctx, req.(*DataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 // Generator_ServiceDesc is the grpc.ServiceDesc for Generator service.
@@ -120,13 +94,12 @@ func (x *generatorGetGenerateDataServer) Send(m *DataResponse) error {
 var Generator_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "pkg.Generator",
 	HandlerType: (*GeneratorServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams: []grpc.StreamDesc{
+	Methods: []grpc.MethodDesc{
 		{
-			StreamName:    "GetGenerateData",
-			Handler:       _Generator_GetGenerateData_Handler,
-			ServerStreams: true,
+			MethodName: "GetData",
+			Handler:    _Generator_GetData_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "api/proto/math.proto",
 }
