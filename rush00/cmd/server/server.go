@@ -4,6 +4,10 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	desc "rush00/pkg/api/proto"
@@ -28,10 +32,8 @@ type GrpcServer struct {
 }
 
 func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_TransmitServer) error {
-	// Set uuID
 	sessionID := uuid.New().String()
 
-	// Generate const mean and sd for request
 	mean := meanMin + rand.Float64()*meanMax
 	sd := sdMin + rand.Float64()*(sdMax-sdMin)
 	randomGen := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
@@ -57,7 +59,7 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 			log.Printf("Generation #%d:\tID: %s\tFrequency: %f\tTimestamp: %s\n", i, message.SessionId, message.Frequency, message.Timestamp)
 
 			if err := stream.SendMsg(message); err != nil {
-				return status.Error(codes.Canceled, err.Error())
+				return err
 			}
 
 			time.Sleep(500 * time.Millisecond)
@@ -66,19 +68,32 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 }
 
 func main() {
-	grpcServer := grpc.NewServer()
-
 	lis, err := net.Listen("tcp", grpcHostPort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
+	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
 	desc.RegisterTransmitterServer(grpcServer, &GrpcServer{})
 
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		sig := <-quit
+		log.Printf("got signal %v, attempting graceful shutdown", sig)
+		grpcServer.GracefulStop()
+	}()
+
+	log.Println("starting gRPC server")
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 
-	// add graceful shutdown
+	wg.Wait()
+	log.Println("gRPC server stopped")
 }

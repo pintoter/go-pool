@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	desc "rush00/pkg/api/proto"
 
@@ -23,8 +22,40 @@ const (
 	client = "0.0.0.0:50051"
 )
 
+type data struct {
+	ID        string
+	Frequency float64
+	Timestamp string
+}
+
+func recieveMessages(wg *sync.WaitGroup, stream desc.Transmitter_TransmitClient) {
+	var i int = 1
+	defer wg.Done()
+	for {
+		resp, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			log.Println(err)
+			return
+		}
+
+		if status.Code(err) == codes.Canceled {
+			log.Println("Server's stream closed after signal from client")
+			return
+		}
+
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		log.Printf("New recieve data #%d ID: %s\tFrequency: %f\tTimestamp: %s\n", i, resp.GetSessionId(), resp.GetFrequency(), resp.GetTimestamp())
+		i++
+	}
+}
+
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	// Create context for handling client's signal with stop recieving data
+	ctx, cancel := context.WithCancel(context.Background())
 	signals := make(chan os.Signal)
 	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM)
 
@@ -36,6 +67,7 @@ func main() {
 		}
 	}()
 
+	// Create gRPC connect
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -51,41 +83,13 @@ func main() {
 	if err != nil {
 		log.Println(err)
 	}
+	log.Println("gRPC client started")
 
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	go func() {
-		var i int = 1
-		defer wg.Done()
-		for {
-			resp, err := stream.Recv()
-			if errors.Is(err, io.EOF) {
-				log.Println(err)
-				return
-			}
-
-			if status.Code(err) == codes.Canceled {
-				log.Println("Server's stream closed after signal from client")
-				return
-			}
-
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-			log.Printf("New recieve data #%d ID: %s\tFrequency: %f\tTimestamp: %s\n", i, resp.GetSessionId(), resp.GetFrequency(), resp.GetTimestamp())
-			i++
-			time.Sleep(2 * time.Second)
-		}
-	}()
-
+	go recieveMessages(&wg, stream)
 	wg.Wait()
-
-	if err := stream.CloseSend(); err != nil {
-		log.Println(err)
-	}
 
 	log.Println("Client shutdown complete")
 }
