@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pkg;
+
+option go_package = ".;pb";
+
+service Transmitter {
+  rpc Transmit(DataRequest) returns (stream DataResponse);
+ }
+
+message DataRequest {
+  
+}
+
+message DataResponse {
+  string session_id = 1;
+  double frequency = 2;
+  string timestamp = 3;
+}
