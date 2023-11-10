@@ -37,7 +37,10 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 	randomGen := rand.New(rand.NewSource(time.Now().UTC().UnixNano()))
 
 	log.Println("Generating data for new request")
-	for i := 1; i <= 10; i++ {
+
+	var i int = 1
+
+	for {
 		select {
 		case <-stream.Context().Done():
 			log.Println("stream has ended")
@@ -60,8 +63,6 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 			time.Sleep(500 * time.Millisecond)
 		}
 	}
-
-	return nil
 }
 
 func main() {
