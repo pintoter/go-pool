@@ -56,6 +56,13 @@ type Message struct {
 	Stat      *Statistic
 }
 
+func enterCoefficient(с chan<- float64) {
+	var value float64
+	fmt.Println("Enter coefficient:")
+	fmt.Scanf("%f", &value)
+	с <- value
+}
+
 func recieveMessages(wg *sync.WaitGroup, stream desc.Transmitter_TransmitClient) {
 	var i int = 1
 
@@ -72,37 +79,34 @@ func recieveMessages(wg *sync.WaitGroup, stream desc.Transmitter_TransmitClient)
 		coefficient  float64
 		anomalyStage bool
 	)
-	anomalyStageStartSig := make(chan os.Signal)
-	signal.Notify(anomalyStageStartSig, syscall.SIGINT) // Handle client's signal "^ + \"
+	anomalyStageSignal := make(chan os.Signal, 1)
+	signal.Notify(anomalyStageSignal, syscall.SIGINT) // Handle client's signal "^ + \"
 
 	chanWithFloat64 := make(chan float64)
 
 	defer wg.Done()
+	defer close(anomalyStageSignal)
+	defer close(chanWithFloat64)
+
 	for {
 		select {
-		case <-anomalyStageStartSig:
-			
-			go func() {
-				var value float64
-				fmt.Println("Enter coefficient:")
-				fmt.Scanf("%f", &value)
-				chanWithFloat64 <- value
-			}()
+		case sig := <-anomalyStageSignal:
+			log.Printf("got signal from client %v\n", sig)
+
+			go enterCoefficient(chanWithFloat64)
+
 			coefficient = <-chanWithFloat64
 			anomalyStage = true
-			fmt.Println(anomalyStage)
 		default:
 			resp, err := stream.Recv()
 			if errors.Is(err, io.EOF) {
 				log.Println(err)
 				return
 			}
-
 			if status.Code(err) == codes.Canceled {
 				log.Println("Server's stream closed after signal from client")
 				return
 			}
-
 			if err != nil {
 				log.Println(err)
 				return
@@ -115,13 +119,11 @@ func recieveMessages(wg *sync.WaitGroup, stream desc.Transmitter_TransmitClient)
 			// data.Timestamp = resp.Timestamp
 
 			// data.Stat.Update(resp.Frequency) // добавить обработку аномалий
-
+			log.Printf("New recieve data #%d ID: %s\tFrequency: %f\tTimestamp: %s\n", i, resp.GetSessionId(), resp.GetFrequency(), resp.GetTimestamp())
 			if anomalyStage {
 				log.Println("MI V ANOMALII YRA")
 				log.Println("KOEF =", coefficient)
 			}
-
-			log.Printf("New recieve data #%d ID: %s\tFrequency: %f\tTimestamp: %s\n", i, resp.GetSessionId(), resp.GetFrequency(), resp.GetTimestamp())
 		}
 	}
 }
@@ -129,10 +131,11 @@ func recieveMessages(wg *sync.WaitGroup, stream desc.Transmitter_TransmitClient)
 func main() {
 	// Create context for handling client's signal with stop recieving data
 	ctx, cancel := context.WithCancel(context.Background())
-	signals := make(chan os.Signal)
-	signal.Notify(signals, syscall.SIGINT, syscall.SIGTERM) // syscall.SIGINT
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGQUIT, syscall.SIGTERM) // ^ + \
 
 	go func() {
+		defer close(signals)
 		select {
 		case <-signals:
 			log.Println("Recieve signal from client. Shutting down")
