@@ -24,7 +24,7 @@ const (
 	meanMax      float64 = 10
 	sdMin        float64 = 0.3
 	sdMax        float64 = 1.5
-	grpcHostPort         = "0.0.0.0:50051"
+	grpcHostPort         = "0.0.0.0:50055"
 )
 
 type GrpcServer struct {
@@ -62,7 +62,7 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 				return err
 			}
 
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1000 * time.Millisecond)
 		}
 	}
 }
