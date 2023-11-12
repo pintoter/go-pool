@@ -62,7 +62,7 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 				return err
 			}
 
-			time.Sleep(1000 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 		}
 	}
 }
