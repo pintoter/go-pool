@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"rush00/internal/statistic"
+	"strconv"
 	"sync"
 	"syscall"
 
@@ -16,6 +17,7 @@ import (
 	"gorm.io/gorm"
 
 	desc "rush00/pkg/api/proto"
+	"rush00/pkg/database/postgres"
 )
 
 type RecieverService struct {
@@ -42,8 +44,6 @@ func (r *RecieverService) Recieve(stream desc.Transmitter_TransmitClient, coeffi
 
 	anomalyStageSignal := make(chan os.Signal, 1)
 	signal.Notify(anomalyStageSignal, syscall.SIGINT)
-
-	// defer close(anomalyStageSignal)
 
 	for {
 		select {
@@ -80,12 +80,24 @@ func (r *RecieverService) Recieve(stream desc.Transmitter_TransmitClient, coeffi
 				return
 			}
 
-			log.Printf("New data recievedID: %s\tFrequency: %f\tTimestamp: %s\n", resp.GetSessionId(), resp.GetFrequency(), resp.GetTimestamp())
+			log.Printf(
+				"New data recievedID: %s\tFrequency: %f\tTimestamp: %s\n",
+				resp.GetSessionId(),
+				resp.GetFrequency(),
+				resp.GetTimestamp(),
+			)
 			if anomalyStage {
 				if r.isAnomaly(resp.Frequency, coefficient) {
-					log.Println("ANOMALY ANOMALY ANOMALY")
-					// Добавить вставку данных в DB и лог успешно или нет
-					// r.db.Create(&r.db.Messa)
+					timestmp, _ := strconv.Atoi(resp.GetTimestamp())
+					err = r.db.Create(&postgres.Message{
+						SessionID: resp.GetSessionId(),
+						Frequency: resp.GetFrequency(),
+						Timestamp: uint64(timestmp),
+					}).Error
+					if err != nil {
+						log.Println("Error writing to database:", err)
+						return
+					}
 				}
 				continue
 			} else {

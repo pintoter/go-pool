@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -53,10 +54,16 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 			message := &desc.DataResponse{
 				SessionId: sessionID,
 				Frequency: frequency,
-				Timestamp: time.Now().Format(time.RFC3339),
+				Timestamp: strconv.Itoa(int(time.Now().Unix())),
 			}
 
-			log.Printf("Generation #%d:\tID: %s\tFrequency: %f\tTimestamp: %s\n", i, message.SessionId, message.Frequency, message.Timestamp)
+			log.Printf(
+				"Generation #%d:\tID: %s\tFrequency: %f\tTimestamp: %s\n",
+				i,
+				message.SessionId,
+				message.Frequency,
+				message.Timestamp,
+			)
 
 			if err := stream.SendMsg(message); err != nil {
 				return err
