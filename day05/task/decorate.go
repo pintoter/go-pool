@@ -15,6 +15,16 @@ func unrollGirliand(root *common.TreeNode) []bool {
 	values := make([]bool, 1)
 	values[0] = root.HasToy
 
+	/*
+					____1____
+				 /		     \
+				0			      1
+			 / \		    /	   \
+		  1	  1      1		  0
+		 /\		/\    /\		  /\
+		1  0 0  1  0  0    1  1
+	*/
+
 	isEvenLevel := true
 
 	for len(queue) > 0 {

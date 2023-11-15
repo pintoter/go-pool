@@ -3,10 +3,11 @@ package task
 import (
 	"day05/common"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
-func TestAreToysBalanced(t *testing.T) {
+func TestUnrollGirland(t *testing.T) {
 	/*
 					____1____
 				 /		     \
@@ -33,56 +34,29 @@ func TestAreToysBalanced(t *testing.T) {
 		t1.Right.Right.Left = common.Create(true)
 		t1.Right.Right.Right = common.Create(true)
 	}
-	/*
-			____1____
-		 /		     \
-		0			      1
-	*/
-	t2 := common.Create(true)
-	{
-		t2.Left = common.Create(false)
-		t2.Right = common.Create(true)
-	}
-
-	/*
-		___NIL___
-	*/
-	var t3 *common.TreeNode
-
-	/*
-			____1____
-		 /		     \
-		1			     NIL
-	*/
-	t4 := common.Create(true)
-	t4.Left = common.Create(true)
-
-	/*
-			____1____
-		 /		     \
-		0			     NIL
-	*/
-	t5 := common.Create(true)
-	t5.Left = common.Create(false)
 
 	var tests = []struct {
 		t    *common.TreeNode
-		want bool
+		want []bool
 	}{
-		{t1, true},
-		{t2, false},
-		{t3, false},
-		{t4, false},
-		{t5, true},
+		{t1, []bool{true, false, true, false, true, true, true, true, false, false, true, false, false, true, true}},
 	}
 
 	for id, tt := range tests {
-		testname := fmt.Sprintf("areToysBalanced_t%d", id+1)
+
+		testname := fmt.Sprintf("unrollGirland_t%d", id+1)
 		t.Run(testname, func(t *testing.T) {
-			ans := AreToysBalanced(tt.t)
-			if ans != tt.want {
-				t.Errorf("got %v, want %v", ans, tt.want)
+			ans := unrollGirliand(tt.t)
+			if !reflect.DeepEqual(tt.want, ans) {
+				t.Errorf("want %v, got %v", tt.want, ans)
 			}
 		})
 	}
 }
+
+/*
+
+want [true false true false true true true true false false true false false true true], 
+got  [true false true false true true true false true true false false false true true]
+
+*/
