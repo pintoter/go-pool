@@ -1,37 +1,29 @@
 package task
 
 import (
-	"day05/common"
+	"day05/common/tree"
 )
 
-func unrollGirliand(root *common.TreeNode) []bool {
+func unrollGirliand(root *tree.Node) []bool {
 	if root == nil {
 		return []bool{}
 	}
 
-	queue := make([]*common.TreeNode, 1)
+	queue := make([]*tree.Node, 1)
 	queue[0] = root
 
 	values := make([]bool, 1)
 	values[0] = root.HasToy
-
-	/*
-					____1____
-				 /		     \
-				0			      1
-			 / \		    /	   \
-		  1	  1      1		  0
-		 /\		/\    /\		  /\
-		1  0 0  1  0  0    1  1
-	*/
 
 	isEvenLevel := true
 
 	for len(queue) > 0 {
 		levelSize := len(queue)
 
-		for i, j := 0, levelSize; i < levelSize; i, j = i+1, j-1 {
-			if isEvenLevel {
+		reverseSlice(queue)
+
+		for i := 0; i < levelSize; i++ {
+			if isEvenLevel == true {
 				if queue[i].Left != nil {
 					queue = append(queue, queue[i].Left)
 					values = append(values, queue[i].Left.HasToy)
@@ -41,20 +33,27 @@ func unrollGirliand(root *common.TreeNode) []bool {
 					values = append(values, queue[i].Right.HasToy)
 				}
 			} else {
-				if queue[j-1].Right != nil {
-					queue = append(queue, queue[j-1].Right)
-					values = append(values, queue[j-1].Right.HasToy)
+				if queue[i].Right != nil {
+					queue = append(queue, queue[i].Right)
+					values = append(values, queue[i].Right.HasToy)
 				}
-				if queue[j-1].Left != nil {
-					queue = append(queue, queue[j-1].Left)
-					values = append(values, queue[j-1].Left.HasToy)
+				if queue[i].Left != nil {
+					queue = append(queue, queue[i].Left)
+					values = append(values, queue[i].Left.HasToy)
 				}
 			}
 		}
 
-		isEvenLevel = false
+		isEvenLevel = !isEvenLevel
+
 		queue = queue[levelSize:]
 	}
 
 	return values
+}
+
+func reverseSlice(slice []*tree.Node) {
+	for i, j := 0, len(slice)-1; i < j; i, j = i+1, j-1 {
+		slice[i], slice[j] = slice[j], slice[i]
+	}
 }

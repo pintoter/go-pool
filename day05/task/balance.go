@@ -1,17 +1,17 @@
 package task
 
 import (
-	"day05/common"
+	"day05/common/tree"
 )
 
-func AreToysBalanced(root *common.TreeNode) bool {
+func AreToysBalanced(root *tree.Node) bool {
 	if root == nil {
 		return false
 	}
 	return getSummary(root.Left) == getSummary(root.Right)
 }
 
-func getSummary(root *common.TreeNode) int {
+func getSummary(root *tree.Node) int {
 	switch {
 	case root == nil:
 		return 0

@@ -2,18 +2,19 @@ package task
 
 import (
 	"container/heap"
-	"day05/common"
+	cheap "day05/common/heap"
 	"errors"
+	"fmt"
 )
 
-func getNCoolestPresents(presents []common.Present, n int) ([]common.Present, error) {
+func getNCoolestPresents(presents []cheap.Present, n int) ([]cheap.Present, error) {
 	if n > len(presents) || n <= 0 {
 		return nil, errors.New("invalid size")
 	}
 
-	ph := make(common.Presents, n)
+	ph := make(cheap.Presents, len(presents))
 	for i, j := range presents {
-		ph[i] = &common.Present{
+		ph[i] = &cheap.Present{
 			Value: j.Value,
 			Size:  j.Size,
 		}
@@ -21,10 +22,33 @@ func getNCoolestPresents(presents []common.Present, n int) ([]common.Present, er
 
 	heap.Init(&ph)
 
-	coolestPresent := make([]common.Present, n)
-	for i := 0; ph.Len() > 0; i++ {
-		coolestPresent[i] = *(heap.Pop(&ph).(*common.Present))
+	coolestPresent := make([]cheap.Present, n)
+	for i := 0; i < n; i++ {
+		coolestPresent[i] = *(heap.Pop(&ph).(*cheap.Present))
 	}
 
 	return coolestPresent, nil
+}
+
+func main() {
+	t1 := []cheap.Present{
+		{
+			Value: 5,
+			Size:  1,
+		},
+		{
+			Value: 4,
+			Size:  5,
+		},
+		{
+			Value: 3,
+			Size:  1,
+		},
+		{
+			Value: 5,
+			Size:  2,
+		},
+	}
+
+	fmt.Println(getNCoolestPresents(t1, 2))
 }

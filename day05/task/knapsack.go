@@ -1,13 +1,13 @@
 package task
 
 import (
-	"day05/common"
+	"day05/common/heap"
 	"math"
 )
 
-func grabPresents(presents []common.Present, maxSize int) (profitPresents []common.Present) {
+func grabPresents(presents []heap.Present, maxSize int) (profitPresents []heap.Present) {
 	if maxSize <= 0 {
-		return []common.Present{}
+		return []heap.Present{}
 	}
 
 	weightsLen := len(presents)
@@ -34,7 +34,7 @@ func grabPresents(presents []common.Present, maxSize int) (profitPresents []comm
 	return profitPresents
 }
 
-func tracePresents(table [][]int, i, j int, presents, profitPresents *[]common.Present) {
+func tracePresents(table [][]int, i, j int, presents, profitPresents *[]heap.Present) {
 	if table[i][j] == 0 {
 		return
 	}
