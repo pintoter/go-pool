@@ -1,0 +1,52 @@
+package task
+
+import (
+	"day05/common"
+	"math"
+)
+
+func grabPresents(presents []common.Present, maxSize int) (profitPresents []common.Present) {
+	if maxSize <= 0 {
+		return []common.Present{}
+	}
+
+	weightsLen := len(presents)
+	table := make([][]int, weightsLen+1)
+	for i := range table {
+		table[i] = make([]int, maxSize+1)
+	}
+
+	for i := 0; i <= weightsLen; i++ {
+		for j := 0; j <= maxSize; j++ {
+			if i == 0 || j == 0 {
+				table[i][j] = 0
+			} else {
+				if presents[i-1].Size > j {
+					table[i][j] = table[i-1][j]
+				} else {
+					table[i][j] = max(table[i-1][j], table[i-1][j-presents[i-1].Size]+presents[i-1].Value)
+				}
+			}
+		}
+	}
+
+	tracePresents(table, weightsLen, maxSize, &presents, &profitPresents)
+	return profitPresents
+}
+
+func tracePresents(table [][]int, i, j int, presents, profitPresents *[]common.Present) {
+	if table[i][j] == 0 {
+		return
+	}
+
+	if table[i-1][j] == table[i][j] {
+		tracePresents(table, i-1, j, presents, profitPresents)
+	} else {
+		tracePresents(table, i-1, j-(*presents)[i-1].Size, presents, profitPresents)
+		*profitPresents = append(*profitPresents, (*presents)[i-1])
+	}
+}
+
+func max(a, b int) int {
+	return int(math.Max(float64(a), float64(b)))
+}
