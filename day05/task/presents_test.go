@@ -4,6 +4,7 @@ import (
 	cheap "day05/common/heap"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -50,4 +51,20 @@ func TestGetNCoolestPresents(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("getNcollestPresents_error", func(t *testing.T) {
+		var test = []struct {
+			got         []cheap.Present
+			poppedCount int
+			want        []cheap.Present
+		}{
+			{t1, 0, []cheap.Present{}},
+		}
+
+		ans, err := getNCoolestPresents(test[0].got, test[0].poppedCount)
+
+		if len(ans) != 0 && !strings.Contains(err.Error(), "invalid size") {
+			t.Errorf("invalid test")
+		}
+	})
 }

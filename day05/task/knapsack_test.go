@@ -19,6 +19,13 @@ func TestGrabPresents(t *testing.T) {
 	var profitPresents []cheap.Present
 	var maxSize int
 
+	t.Run("MaxSize - 0", func(t *testing.T) {
+		maxSize = 0
+		profitPresents = grabPresents(presents, maxSize)
+		if len(profitPresents) != 0 {
+			t.Errorf("[Expected] []Present != [Real] %v\n", profitPresents)
+		}
+	})
 	t.Run("MaxSize - 3", func(t *testing.T) {
 		maxSize = 3
 		profitPresents = grabPresents(presents, maxSize)

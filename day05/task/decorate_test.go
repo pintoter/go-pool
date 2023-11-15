@@ -82,6 +82,8 @@ func TestUnrollGirland(t *testing.T) {
 		t2.Right.Right.Right.Right = tree.Create(true)
 	}
 
+	var t3 *tree.Node
+
 	var tests = []struct {
 		t    *tree.Node
 		want []bool
@@ -101,4 +103,11 @@ func TestUnrollGirland(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("error test", func(t *testing.T) {
+		ans := unrollGirliand(t3)
+		if len(ans) != 0 {
+			t.Errorf("want []bool - got %v", ans)
+		}
+	})
 }

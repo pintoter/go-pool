@@ -4,7 +4,6 @@ import (
 	"container/heap"
 	cheap "day05/common/heap"
 	"errors"
-	"fmt"
 )
 
 func getNCoolestPresents(presents []cheap.Present, n int) ([]cheap.Present, error) {
@@ -28,27 +27,4 @@ func getNCoolestPresents(presents []cheap.Present, n int) ([]cheap.Present, erro
 	}
 
 	return coolestPresent, nil
-}
-
-func main() {
-	t1 := []cheap.Present{
-		{
-			Value: 5,
-			Size:  1,
-		},
-		{
-			Value: 4,
-			Size:  5,
-		},
-		{
-			Value: 3,
-			Size:  1,
-		},
-		{
-			Value: 5,
-			Size:  2,
-		},
-	}
-
-	fmt.Println(getNCoolestPresents(t1, 2))
 }
