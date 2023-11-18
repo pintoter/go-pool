@@ -27,9 +27,5 @@ func NewHandler(service *service.Service) *Handler {
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[%s] %s", r.Method, r.URL)
 
-	if r.Method == http.MethodPost { // переделать на обработку метода внутри хендлера
-		h.mux.ServeHTTP(w, r)
-	} else {
-		w.WriteHeader(http.StatusNotImplemented)
-	}
+	h.mux.ServeHTTP(w, r)
 }
