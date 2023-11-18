@@ -75,6 +75,10 @@ func (r *RecieverService) Recieve(stream desc.Transmitter_TransmitClient, coeffi
 				log.Println("Server's stream closed after signal from client")
 				return
 			}
+			if status.Code(err) == codes.Internal {
+				log.Println("Server unavailible. Closing client...")
+				return
+			}
 			if err != nil {
 				log.Println(err)
 				return
@@ -114,7 +118,7 @@ func (r *RecieverService) isAnomaly(value, coefficient float64) bool {
 	low := r.stat.Mean - (coefficient * r.stat.SD)
 	high := r.stat.Mean + (coefficient * r.stat.SD)
 
-	if !(value >= low && value <= high) { // не знаю как назвать
+	if !(value >= low && value <= high) {
 		log.Printf("New anomaly detected: Value: %f\t Low: %f High: %f\n", value, low, high)
 		return true
 	}

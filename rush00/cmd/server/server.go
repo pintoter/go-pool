@@ -28,6 +28,8 @@ const (
 	grpcHostPort         = "0.0.0.0:50055"
 )
 
+var stopServer = make(chan struct{}, 1)
+
 type GrpcServer struct {
 	desc.UnimplementedTransmitterServer
 }
@@ -48,6 +50,11 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 		case <-stream.Context().Done():
 			log.Println("stream has ended")
 			return status.Error(codes.Canceled, "stream has ended")
+		case <-stopServer:
+			go func() {
+				time.Sleep(3 * time.Second)
+				stream.Send(nil)
+			}()
 		default:
 			frequency := randomGen.NormFloat64()*sd + mean
 
@@ -69,7 +76,7 @@ func (s *GrpcServer) Transmit(req *desc.DataRequest, stream desc.Transmitter_Tra
 				return err
 			}
 
-			time.Sleep(500 * time.Millisecond)
+			time.Sleep(1000 * time.Millisecond)
 		}
 	}
 }
@@ -93,7 +100,8 @@ func main() {
 		defer wg.Done()
 		sig := <-quit
 		log.Printf("got signal %v, attempting graceful shutdown", sig)
-		grpcServer.GracefulStop()
+		stopServer <- struct{}{}
+		grpcServer.Stop()
 	}()
 
 	log.Println("starting gRPC server")
@@ -102,5 +110,5 @@ func main() {
 	}
 
 	wg.Wait()
-	log.Println("gRPC server stopped")
+	log.Println("gRPC server's stop")
 }

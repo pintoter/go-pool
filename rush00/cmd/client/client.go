@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	desc "rush00/pkg/api/proto"
+	"rush00/pkg/database/postgres"
 
 	"rush00/internal/config"
 	"rush00/internal/service"
@@ -58,10 +58,12 @@ func main() {
 
 	cfg := config.Get()
 
-	fmt.Println(cfg)
-	// db, err := postgres.New(&cfg.DB)
+	db, err := postgres.New(&cfg.DB)
+	if err != nil {
+		log.Fatal("failed connecting to DB", err)
+	}
 
-	service := service.NewService(nil)
+	service := service.NewService(db)
 
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
