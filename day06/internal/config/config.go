@@ -3,21 +3,11 @@ package config
 import (
 	"bufio"
 	"errors"
-	"io"
+	"fmt"
 	"log"
 	"os"
 	"strings"
 )
-
-var cfg *Config
-
-func GetConfigInstance() Config {
-	if cfg != nil {
-		return *cfg
-	}
-
-	return Config{}
-}
 
 type HTTPConfig struct {
 	Host string
@@ -25,11 +15,16 @@ type HTTPConfig struct {
 }
 
 type DB struct {
-	DSN string
+	User     string
+	Password string
+	Host     string
+	Port     string
+	Name     string
+	Sslmode  string
 }
 
 func (db *DB) GetDSN() string {
-	return db.DSN
+	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=%s", db.User, db.Password, db.Host, db.Port, db.Name, db.Sslmode)
 }
 
 type AdminCredentials struct {
@@ -44,31 +39,19 @@ type Config struct {
 }
 
 // Read configurations from file and init instance Config
-func ReadConfigTxt(configTxt string) error {
-	if cfg != nil {
-		return nil
-	}
-
+func ReadConfigTxt(configTxt string) (*Config, error) {
 	file, err := os.Open(configTxt)
 	if err != nil {
 		log.Println(err)
-		return err
+		return nil, err
 	}
 	defer file.Close()
 
-	reader := bufio.NewReader(file)
+	cfg := &Config{}
 
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			} else {
-				log.Println(err)
-				return err
-			}
-		}
-
+	reader := bufio.NewScanner(file)
+	for reader.Scan() {
+		line := reader.Text()
 		credentials := strings.Split(line, ":")
 
 		switch credentials[0] {
@@ -76,16 +59,26 @@ func ReadConfigTxt(configTxt string) error {
 			cfg.AdminCredentials.Login = credentials[1]
 		case "password":
 			cfg.AdminCredentials.Password = credentials[1]
-		case "dsn":
-			cfg.DB.DSN = credentials[1]
+		case "dbuser":
+			cfg.DB.User = credentials[1]
+		case "dbpassword":
+			cfg.DB.Password = credentials[1]
+		case "dbhost":
+			cfg.DB.Host = credentials[1]
+		case "dbport":
+			cfg.DB.Port = credentials[1]
+		case "dbname":
+			cfg.DB.Name = credentials[1]
+		case "sslmode":
+			cfg.DB.Sslmode = credentials[1]
 		case "host":
 			cfg.Addr.Host = credentials[1]
 		case "port":
 			cfg.Addr.Port = credentials[1]
 		default:
-			return errors.New("undefined credential")
+			return nil, errors.New("undefined credential")
 		}
 	}
 
-	return nil
+	return cfg, nil
 }

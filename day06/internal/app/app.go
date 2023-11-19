@@ -17,11 +17,10 @@ const (
 )
 
 func Run() {
-	err := config.ReadConfigTxt(configPath)
+	cfg, err := config.ReadConfigTxt(configPath)
 	if err != nil {
 		log.Fatal("Failed init configuration:", err)
 	}
-	cfg := config.GetConfigInstance()
 
 	db, err := postgres.ConnectDB(&cfg.DB)
 	if err != nil {
@@ -30,7 +29,7 @@ func Run() {
 
 	service := service.NewService(db)
 
-	handler := transport.NewHandler(service)
+	handler := transport.NewHandler(&cfg.AdminCredentials, service)
 
 	server := server.New(handler, cfg.Addr.Host, cfg.Addr.Port)
 
