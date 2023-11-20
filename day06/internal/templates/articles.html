@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="eu">
+<img class="fit-picture" src="./../web/image/amazing_logo.png" alt="Logo">
+<head>
+    <meta charset="UTF-8">
+    <title>My Blog</title>
+</head>
+<body>
+<h1>Welcome to My Blog</h1>
+<ul>
+    {{if .Empty}}No articles yet{{end}}
+    {{range .Articles}}
+    <li>
+        <div>{{.Title}}</div>
+        <div>{{.Content}}</div>
+    </li>
+    <li><a href="/article/{{.ID}}">{{.Title}}</a></li>
+    {{end}}
+</ul>
+
+{{if .HasPrevPage}}
+<a href="/?page={{.PrevPage}}">Previous Page</a>
+{{end}}
+
+{{if .HasNextPage}}
+<a href="/?page={{.NextPage}}">Next Page</a>
+{{end}}
+</body>
+</html>

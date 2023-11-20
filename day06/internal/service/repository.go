@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"day06/internal/entity"
+	"log"
 
 	"gorm.io/gorm"
 )
@@ -16,16 +17,48 @@ func newRepo(db *gorm.DB) IRepository {
 }
 
 func (r *repository) CreateArticle(ctx context.Context, name, link string) (int, error) {
+	dbArt := entity.Article{
+		Title:   name,
+		Content: link,
+	}
+
+	if err := r.db.Create(&dbArt).Error; err != nil {
+		log.Println(err)
+		return 0, err
+	}
 
 	return 0, nil
 }
 
 func (r *repository) GetArticle(ctx context.Context, id int) (entity.Article, error) {
+	var article entity.Article
 
-	return entity.Article{}, nil
+	if err := r.db.Where("id = ?", id).First(&article).Error; err != nil {
+		return entity.Article{}, err
+	}
+
+	return article, nil
 }
 
-func (r *repository) GetArticles(ctx context.Context, id int) ([]entity.Article, error) {
+func (r *repository) GetArticles(ctx context.Context, offset int) ([]entity.Article, int, error) {
+	var total int64
+	var articles []entity.Article
 
-	return nil, nil
+	if err := r.db.Order("id asc").Offset(offset).Limit(3).Find(&articles).Error; err != nil {
+		return nil, 0, err
+	}
+
+	r.db.Model(&entity.Article{}).Count(&total)
+
+	return articles, int(total), nil
+}
+
+func (r *repository) GetArticleByTitle(ctx context.Context, title string) (entity.Article, error) {
+	var article entity.Article
+
+	if err := r.db.Where("title = ?", title).First(&article).Error; err != nil {
+		return entity.Article{}, err
+	}
+
+	return article, nil
 }
