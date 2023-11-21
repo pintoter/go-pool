@@ -2,6 +2,7 @@ package transport
 
 import (
 	"context"
+	"day06/internal/entity"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -11,8 +12,10 @@ import (
 )
 
 const (
-	minPage        = 1
 	articlesOnPage = 3
+	articlesHTML   = "./internal/templates/articles.html"
+	articleHTML    = "./internal/templates/article.html"
+	minPage        = 1
 )
 
 type articlePage struct {
@@ -40,13 +43,13 @@ func (h *Handler) createArticleHandler(w http.ResponseWriter, r *http.Request) {
 	content := r.FormValue("content")
 
 	if title == "" || content == "" {
-		http.Error(w, "params can't be empty", http.StatusBadRequest)
+		http.Error(w, entity.ErrEmptyParams.Error(), http.StatusBadRequest)
 		return
 	}
 
 	_, err := h.service.CreateArticle(context.Background(), title, content)
 	if err != nil {
-		http.Error(w, "failed to create article", http.StatusInternalServerError)
+		http.Error(w, entity.ErrFailedCreateArticle.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -58,17 +61,17 @@ func (h *Handler) articleHandler(w http.ResponseWriter, r *http.Request) {
 
 	articleId, err := strconv.Atoi(id)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		http.Error(w, entity.ErrInvalidId.Error(), http.StatusBadRequest)
 		return
 	}
 
 	article, err := h.service.GetArticle(context.Background(), articleId)
 	if err != nil {
-		http.Error(w, "article not found", http.StatusNotFound)
+		http.Error(w, entity.ErrArticleNotFound.Error(), http.StatusNotFound)
 		return
 	}
 
-	renderTemplate(w, "internal/templates/article.html", &articlePage{
+	renderTemplate(w, articleHTML, &articlePage{
 		Id:      article.ID,
 		Title:   article.Title,
 		Content: template.HTML(blackfriday.Run([]byte(article.Content))),
@@ -84,7 +87,7 @@ func (h *Handler) articlesHandler(w http.ResponseWriter, r *http.Request) {
 	if param != "" {
 		page, err = strconv.Atoi(param)
 		if err != nil || page < minPage {
-			http.Error(w, "uncorrect page", http.StatusBadRequest)
+			http.Error(w, entity.ErrInvalidPage.Error(), http.StatusBadRequest)
 			return
 		}
 	}
@@ -93,17 +96,15 @@ func (h *Handler) articlesHandler(w http.ResponseWriter, r *http.Request) {
 
 	articles, total, err := h.service.GetArticles(context.Background(), articlesOnPage, currentOffset)
 	if err != nil {
-		http.Error(w, "Failed to get articles", http.StatusInternalServerError)
+		http.Error(w, entity.ErrArticlesNotFound.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	empty := false
-	if page == 0 && len(articles) < 1 {
-		empty = true
-	}
-
-	if page < 0 {
-		http.Error(w, "Page is out of range", http.StatusInternalServerError)
+	var empty bool
+	if len(articles) == 0 {
+		renderTemplate(w, articlesHTML, homePage{
+			Empty: !empty,
+		})
 		return
 	}
 
@@ -119,7 +120,7 @@ func (h *Handler) articlesHandler(w http.ResponseWriter, r *http.Request) {
 	hasPrevPage := page > 0
 	hasNextPage := (total-1)/(page+1)/3 > 0
 
-	renderTemplate(w, "internal/templates/articles.html", homePage{
+	renderTemplate(w, articlesHTML, homePage{
 		Articles:    articlePages,
 		HasPrevPage: hasPrevPage,
 		PrevPage:    page - 1,

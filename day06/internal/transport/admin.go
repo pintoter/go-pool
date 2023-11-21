@@ -9,5 +9,5 @@ func (h *Handler) adminHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
-	renderTemplate(w, "internal/templates/admin.html", nil)
+	renderTemplate(w, "./internal/templates/admin.html", nil)
 }

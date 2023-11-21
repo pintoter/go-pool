@@ -30,7 +30,7 @@ func (s *Service) CreateArticle(ctx context.Context, title, content string) (int
 	isExists := s.isArticleExists(ctx, title)
 
 	if isExists {
-		return 0, errors.New("article already exists")
+		return 0, entity.ErrArticleExists
 	}
 
 	id, err := s.repo.CreateArticle(ctx, title, content)

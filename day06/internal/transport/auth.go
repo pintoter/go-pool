@@ -1,8 +1,13 @@
 package transport
 
 import (
+	"day06/internal/entity"
 	"log"
 	"net/http"
+)
+
+const (
+	authHTML = "internal/templates/auth.html"
 )
 
 func (h *Handler) loginHandler(w http.ResponseWriter, r *http.Request) {
@@ -12,7 +17,7 @@ func (h *Handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
-		renderTemplate(w, "internal/templates/auth.html", nil)
+		renderTemplate(w, authHTML, nil)
 		return
 	}
 
@@ -33,7 +38,7 @@ func (h *Handler) loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Redirect(w, r, "/admin", http.StatusFound)
 	} else {
-		http.Error(w, "invalid login credentials", http.StatusUnauthorized)
+		http.Error(w, entity.ErrInvalidCredentials.Error(), http.StatusUnauthorized)
 		return
 	}
 }

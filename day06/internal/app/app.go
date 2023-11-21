@@ -36,7 +36,7 @@ func Run() {
 	server.Run()
 
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGQUIT)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGQUIT, os.Interrupt)
 
 	select {
 	case s := <-quit:

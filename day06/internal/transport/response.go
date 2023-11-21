@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"day06/internal/entity"
 	"html/template"
 	"net/http"
 )
@@ -8,13 +9,9 @@ import (
 func renderTemplate(w http.ResponseWriter, templateFile string, data interface{}) {
 	template, err := template.ParseFiles(templateFile)
 	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
+		http.Error(w, entity.ErrFailedRenderTemplate.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	err = template.Execute(w, data)
-	if err != nil {
-		http.Error(w, "Failed to render template", http.StatusInternalServerError)
-		return
-	}
+	template.Execute(w, data)
 }
