@@ -50,8 +50,6 @@ func (r *repository) GetArticles(ctx context.Context, limit, offset int) ([]enti
 
 	r.db.Model(&entity.Article{}).Count(&total)
 
-	log.Println("GET ARTICLES", articles, total)
-
 	return articles, int(total), nil
 }
 

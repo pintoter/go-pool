@@ -117,8 +117,6 @@ func (h *Handler) articlesHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	log.Println("HANDLER:", articlePages)
-
 	hasPrevPage := page > 0
 	hasNextPage := (total-1)/(page+1)/3 > 0
 
