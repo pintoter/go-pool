@@ -3,7 +3,6 @@ package transport
 import (
 	"context"
 	"html/template"
-	"log"
 	"net/http"
 	"strconv"
 
