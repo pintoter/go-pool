@@ -12,7 +12,7 @@ import (
 type IRepository interface {
 	CreateArticle(ctx context.Context, name, link string) (int, error)
 	GetArticle(ctx context.Context, id int) (entity.Article, error)
-	GetArticles(ctx context.Context, offset int) ([]entity.Article, int, error)
+	GetArticles(ctx context.Context, limit, offset int) ([]entity.Article, int, error)
 	GetArticleByTitle(ctx context.Context, title string) (entity.Article, error)
 }
 
@@ -46,8 +46,8 @@ func (s *Service) GetArticle(ctx context.Context, id int) (entity.Article, error
 	return s.repo.GetArticle(ctx, id)
 }
 
-func (s *Service) GetArticles(ctx context.Context, id int) ([]entity.Article, int, error) {
-	return s.repo.GetArticles(ctx, id)
+func (s *Service) GetArticles(ctx context.Context, limit, offset int) ([]entity.Article, int, error) {
+	return s.repo.GetArticles(ctx, limit, offset)
 }
 
 func (s *Service) isArticleExists(ctx context.Context, title string) bool {

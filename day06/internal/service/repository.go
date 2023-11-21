@@ -40,15 +40,17 @@ func (r *repository) GetArticle(ctx context.Context, id int) (entity.Article, er
 	return article, nil
 }
 
-func (r *repository) GetArticles(ctx context.Context, offset int) ([]entity.Article, int, error) {
+func (r *repository) GetArticles(ctx context.Context, limit, offset int) ([]entity.Article, int, error) {
 	var total int64
 	var articles []entity.Article
 
-	if err := r.db.Order("id asc").Offset(offset).Limit(3).Find(&articles).Error; err != nil {
+	if err := r.db.Order("id asc").Offset(offset).Limit(limit).Find(&articles).Error; err != nil {
 		return nil, 0, err
 	}
 
 	r.db.Model(&entity.Article{}).Count(&total)
+
+	log.Println("GET ARTICLES", articles, total)
 
 	return articles, int(total), nil
 }

@@ -3,11 +3,17 @@ package transport
 import (
 	"context"
 	"html/template"
+	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/russross/blackfriday/v2"
+)
+
+const (
+	minPage        = 1
+	articlesOnPage = 3
 )
 
 type articlePage struct {
@@ -73,17 +79,20 @@ func (h *Handler) articleHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) articlesHandler(w http.ResponseWriter, r *http.Request) {
 	param := r.URL.Query().Get("page")
 
-	page := 0
+	var page int = 1
 	var err error
 
 	if param != "" {
 		page, err = strconv.Atoi(param)
-		if err != nil {
+		if err != nil || page < minPage {
 			http.Error(w, "uncorrect page", http.StatusBadRequest)
+			return
 		}
 	}
 
-	articles, total, err := h.service.GetArticles(context.Background(), page*3)
+	currentOffset := (page - 1) * 3
+
+	articles, total, err := h.service.GetArticles(context.Background(), articlesOnPage, currentOffset)
 	if err != nil {
 		http.Error(w, "Failed to get articles", http.StatusInternalServerError)
 		return
@@ -108,10 +117,12 @@ func (h *Handler) articlesHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	log.Println("HANDLER:", articlePages)
+
 	hasPrevPage := page > 0
 	hasNextPage := (total-1)/(page+1)/3 > 0
 
-	renderTemplate(w, "internal/templates/articles.html", &homePage{
+	renderTemplate(w, "internal/templates/articles.html", homePage{
 		Articles:    articlePages,
 		HasPrevPage: hasPrevPage,
 		PrevPage:    page - 1,

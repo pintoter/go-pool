@@ -6,13 +6,13 @@ import (
 )
 
 func renderTemplate(w http.ResponseWriter, templateFile string, data interface{}) {
-	tmpl, err := template.ParseFiles(templateFile)
+	template, err := template.ParseFiles(templateFile)
 	if err != nil {
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
 	}
 
-	err = tmpl.Execute(w, data) // ????
+	err = template.Execute(w, data)
 	if err != nil {
 		http.Error(w, "Failed to render template", http.StatusInternalServerError)
 		return
