@@ -1,0 +1,16 @@
+mode: set
+day08/describe_plant.go:20.35,24.38 3 1
+day08/describe_plant.go:24.38,27.3 2 1
+day08/describe_plant.go:29.2,31.42 2 1
+day08/describe_plant.go:31.42,36.57 4 1
+day08/describe_plant.go:36.57,40.4 2 1
+day08/describe_plant.go:40.9,40.72 1 1
+day08/describe_plant.go:40.72,43.4 2 1
+day08/describe_plant.go:45.3,45.38 1 1
+day08/describe_plant.go:45.38,47.4 1 1
+day08/describe_plant.go:49.3,49.53 1 1
+day08/element.go:8.47,9.19 1 1
+day08/element.go:9.19,11.3 1 1
+day08/element.go:13.2,13.32 1 1
+day08/element.go:13.32,15.3 1 1
+day08/element.go:17.2,20.28 3 1
