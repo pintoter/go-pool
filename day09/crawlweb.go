@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 )
 
 const maxGoroutines = 8
@@ -57,48 +54,48 @@ func crawlWeb(ctx context.Context, urls <-chan string) chan *string {
 	return result
 }
 
-func main() {
-	var urls []string = []string{
-		"bitcoin",
-		"etherium",
-		"tether",
-		"bnb",
-		"xrp",
-		"usdc",
-		"solana",
-		"cardano",
-		"dogecoin",
-		"tron",
-		"avalanche",
-		"polkadot",
-		"litecoin",
-		"shibainu",
-	}
+// func main() {
+// 	var urls []string = []string{
+// 		"bitcoin",
+// 		"etherium",
+// 		"tether",
+// 		"bnb",
+// 		"xrp",
+// 		"usdc",
+// 		"solana",
+// 		"cardano",
+// 		"dogecoin",
+// 		"tron",
+// 		"avalanche",
+// 		"polkadot",
+// 		"litecoin",
+// 		"shibainu",
+// 	}
 
-	urlsCh := make(chan string)
+// 	urlsCh := make(chan string)
 
-	go func() {
-		for _, url := range urls {
-			urlsCh <- fmt.Sprintf("https://api.coincap.io/v2/assets/%s", url)
-		}
-		close(urlsCh)
-	}()
+// 	go func() {
+// 		for _, url := range urls {
+// 			urlsCh <- fmt.Sprintf("https://api.coincap.io/v2/assets/%s", url)
+// 		}
+// 		close(urlsCh)
+// 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
+// 	ctx, cancel := context.WithCancel(context.Background())
 
-	sig := make(chan os.Signal)
-	signal.Notify(sig, syscall.SIGKILL, syscall.SIGTERM)
+// 	sig := make(chan os.Signal)
+// 	signal.Notify(sig, syscall.SIGKILL, syscall.SIGTERM)
 
-	go func() {
-		s := <-sig
-		fmt.Printf("got signal %v, cancel", s)
-		cancel()
-	}()
+// 	go func() {
+// 		s := <-sig
+// 		fmt.Printf("got signal %v, cancel", s)
+// 		cancel()
+// 	}()
 
-	res := crawlWeb(ctx, urlsCh)
+// 	res := crawlWeb(ctx, urlsCh)
 
-	for body := range res {
-		fmt.Println("GOTCHA")
-		fmt.Println(*body)
-	}
-}
+// 	for body := range res {
+// 		fmt.Println("GOTCHA")
+// 		fmt.Println(*body)
+// 	}
+// }

@@ -6,7 +6,7 @@ import (
 )
 
 func sleepSort(arr []int) chan int {
-	ch := make(chan int, len(arr))
+	ch := make(chan int)
 
 	if len(arr) == 0 || arr == nil {
 		close(ch)
@@ -23,8 +23,11 @@ func sleepSort(arr []int) chan int {
 			ch <- x
 		}(value)
 	}
-	wg.Wait()
-	close(ch)
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
 
 	return ch
 }
