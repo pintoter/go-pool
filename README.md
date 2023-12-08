@@ -107,20 +107,376 @@ $ ./myRotate /path/to/logs/some_application.log
 1. Worked with operation system with packages: "os", "path/filepath".
 2. Worked with goroutines and package "sync".
 
-<!--
-Day03
+## Day03
+### Task 
 
-Create candy.tld:3333 instead of 127.0.0.1:3333
-1) sudo nano /etc/hosts
-2) add "127.0.0.1 candy.tld"
+1. Use [Elasticsearch](https://www.elastic.co/downloads/elasticsearch) as database to provide the ability to search for things on version 7.9.2. Dataset of restaurants (taken from an Open Data portal) consists of more than 13 thousands of restaurants in the area of Moscow, Russia. Every entry has:
+- **ID**
+- **Name**
+- **Address**
+- **Phone**
+- **Longitude**
+- **Latitude**
+2. Create an index and a mapping (use "places" as a name for an index and "place" as a name for an entry). You can create an index using cURL like this:
+```
+~$ curl -XPUT "http://localhost:9200/places"
+```
+but in this task you should use Go Elasticsearch bindings to do the same thing. Next thing you have to do is to provide type mappings for our data. With cURL it will look like this:
+```
+~$ curl -XPUT http://localhost:9200/places/place/_mapping?include_type_name=true -H "Content-Type: application/json" -d @"schema.json"
+```
+where `schema.json` looks like this:
+
+```
+{
+  "properties": {
+    "name": {
+        "type":  "text"
+    },
+    "address": {
+        "type":  "text"
+    },
+    "phone": {
+        "type":  "text"
+    },
+    "location": {
+      "type": "geo_point"
+    }
+  }
+}
+```
+3. Create an HTML UI for our database. Abstract your database behind an interface. To just return the list of entries and be able to [paginate](https://www.elastic.co/guide/en/elasticsearch/reference/current/paginate-search-results.html) through them, this interface is enough:
+```
+type Store interface {
+    // returns a list of items, a total number of hits and (or) an error in case of one
+    GetPlaces(limit int, offset int) ([]types.Place, int, error)
+}
+```
+HTTP application should run on port 8888, responding with a list of restaurants and providing a simple pagination over it. So. when querying "http://127.0.0.1:8888/?page=2" (mind the 'page' GET param) you should be getting a page like this:
+
+```console
+$ curl -s -XGET "http://127.0.0.1:8888/?page=2"
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Places</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+<h5>Total: 13649</h5>
+<ul>
+    <li>
+        <div>Sushi Wok</div>
+        <div>gorod Moskva, prospekt Andropova, dom 30</div>
+        <div>(499) 754-44-44</div>
+    </li>
+    <li>
+        <div>Ryba i mjaso na ugljah</div>
+        <div>gorod Moskva, prospekt Andropova, dom 35A</div>
+        <div>(499) 612-82-69</div>
+    </li>
+    <li>
+        <div>Hleb nasuschnyj</div>
+        <div>gorod Moskva, ulitsa Arbat, dom 6/2</div>
+        <div>(495) 984-91-82</div>
+    </li>
+</ul>
+<a href="/?page=1">Previous</a>
+<a href="/?page=3">Next</a>
+<a href="/?page=1364">Last</a>
+</body>
+</html>
+```
+
+A "Previous" link should disappear on page 1 and "Next" link should disappear on last page.
+Also, in case 'page' param is specified with a wrong value (outside [0..last_page] or not numeric) your page should return HTTP 400 error and plain text with an error description:
+
+```
+Invalid 'page' value: 'foo'
+```
+
+4. Implement handler which responds with `Content-Type: application/json` and JSON version of previous task (example for `http://127.0.0.1:8888/api/places?page=3`):
+
+```console
+$ curl -s -XGET "http://127.0.0.1:8888/api/places?page=3"
+{
+  "name": "Places",
+  "total": 13649,
+  "places": [
+    {
+      "id": 65,
+      "name": "AZERBAJDZhAN",
+      "address": "gorod Moskva, ulitsa Dem'jana Bednogo, dom 4",
+      "phone": "(495) 946-34-30",
+      "location": {
+        "lat": 55.769830485601204,
+        "lon": 37.486914061171504
+      }
+    },
+    {
+      "id": 69,
+      "name": "Vojazh",
+      "address": "gorod Moskva, Beskudnikovskij bul'var, dom 57, korpus 1",
+      "phone": "(499) 485-20-00",
+      "location": {
+        "lat": 55.872553383512496,
+        "lon": 37.538326789741
+      }
+    },
+  ],
+  "prev_page": 2,
+  "next_page": 4,
+  "last_page": 1364
+}
+```
+
+Also, in case 'page' param is specified with a wrong value (outside [0..last_page] or not numeric) your API should respond with a corresponding HTTP 400 error and similar JSON:
+```
+{
+    "error": "Invalid 'page' value: 'foo'"
+}
+```
+5. Implement searching for *three* closest restaurants, configure sorting for your query:
+
+```
+"sort": [
+    {
+      "_geo_distance": {
+        "location": {
+          "lat": 55.674,
+          "lon": 37.666
+        },
+        "order": "asc",
+        "unit": "km",
+        "mode": "min",
+        "distance_type": "arc",
+        "ignore_unmapped": true
+      }
+    }
+]
+```
+where "lat" and "lon" are your current coordinates. 
+So, for an URL http://127.0.0.1:8888/api/recommend?lat=55.674&lon=37.666 your application should return JSON like this:
+
+```console
+$ curl -s -XGET "http://127.0.0.1:8888/api/recommend?lat=55.674&lon=37.666"
+{
+  "name": "Recommendation",
+  "places": [
+    {
+      "id": 30,
+      "name": "Ryba i mjaso na ugljah",
+      "address": "gorod Moskva, prospekt Andropova, dom 35A",
+      "phone": "(499) 612-82-69",
+      "location": {
+        "lat": 55.67396575768212,
+        "lon": 37.66626689310591
+      }
+    },
+    {
+      "id": 3348,
+      "name": "Pizzamento",
+      "address": "gorod Moskva, prospekt Andropova, dom 37",
+      "phone": "(499) 612-33-88",
+      "location": {
+        "lat": 55.673075576456,
+        "lon": 37.664533747576
+      }
+    },
+    {
+      "id": 3347,
+      "name": "KOFEJNJa «KAPUChINOFF»",
+      "address": "gorod Moskva, prospekt Andropova, dom 37",
+      "phone": "(499) 612-33-88",
+      "location": {
+        "lat": 55.672865251005106,
+        "lon": 37.6645689561318
+      }
+    }
+  ]
+}
+```
+
+6. Provide some simple form of authentication.
+
+Currently the one of the most popular ways of implementing that for an API is by using [JWT](https://jwt.io/introduction/).
+
+Implement an API endpoint `http://127.0.0.1:8888/api/get_token` which sole purpose will be to generate a token and return it, like this (this is an example, your token will likely be different):
+
+```console
+$ curl -s -XGET "http://127.0.0.1:8888/api/get_token"
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNjAxOTc1ODI5LCJuYW1lIjoiTmlrb2xheSJ9.FqsRe0t9YhvEC3hK1pCWumGvrJgz9k9WvhJgO8HsIa8"
+}
+```
+Set header 'Content-Type: application/json'. Protect your `/api/recommend` endpoint with a JWT middleware, that will check the validity of this token.
+
+So by default when querying this API from the browser it should now fail with an HTTP 401 error, but work when `Authorization: Bearer <token>` header is specified by the client (you may check this using cURL or Postman).
 
 
-Day04
+## Day04
+### Task 
 
-Create candy.tld:3333 instead of 127.0.0.1:3333
-1) sudo nano /etc/hosts
-2) add "127.0.0.1 candy.tld"
+1. Recreate the server:
+```yaml
+---
+swagger: '2.0'
+info:
+  version: 1.0.0
+  title: Candy Server
+paths:
+  /buy_candy:
+    post:
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: order
+          description: summary of the candy order
+          schema:
+            type: object
+            required:
+              - money
+              - candyType
+              - candyCount
+            properties:
+              money:
+                description: amount of money put into vending machine
+                type: integer
+              candyType:
+                description: kind of candy
+                type: string
+              candyCount:
+                description: number of candy
+                type: integer
+      operationId: buyCandy
+      responses:
+        201:
+          description: purchase succesful
+          schema:
+              type: object
+              properties:
+                thanks:
+                  type: string
+                change:
+                  type: integer
+        400:
+          description: some error in input data
+          schema:
+              type: object
+              properties:
+                error:
+                  type: string
+        402:
+          description: not enough money
+          schema:
+              type: object
+              properties:
+                error:
+                  type: string
+```
 
-Example request: 
-curl -XPOST -H "Content-Type: application/json" -d '{"money": 20, "candyType": "AA", "candyCount": 1}' http://candy.tld:3333/buy_candy
--->
+Every candy buyer puts in money, chooses which kind of candy to purchase and how many. This data is being sent over to the server via HTTP and JSON and then:
+
+1) If the sum of candy prices (see Chapter 1) is smaller or equal to the amount of money the buyer gave to a machine, the server responds with **HTTP 201** and returns a JSON with two fields - `"thanks"** saying "Thank you!" and "change"` being the amount of change the machine has to give back the customer.
+2) If the sum is larger that the amount of money provided, the server responds with **HTTP 402** and an error message in JSON saying:
+`"You need {amount} more money!"`,
+where `{amount}` is the difference between the provided and expected.
+4) If the client provided a negative candyCount or wrong candyType (all five candy types are encoded by two letters, so it's one of "CE", "AA", "NT", "DE" or "YR", all other cases are considered non-valid) then the server should respond with **HTTP 400** and an error inside JSON describing what had gone wrong. You can actually do it in two different ways - it's either write the code manually with these checks or modify the Swagger spec above so it would cover these cases.
+
+> **Hint:** all data from both client and server should be in JSON, so you can test your server like this, for example:
+
+```console
+$ curl -XPOST -H "Content-Type: application/json" -d '{"money": 20, "candyType": "AA", "candyCount": 1}' http://127.0.0.1:3333/buy_candy
+
+{"change":5,"thanks":"Thank you!"}
+
+$ curl -XPOST -H "Content-Type: application/json" -d '{"money": 46, "candyType": "YR", "candyCount": 2}' http://127.0.0.1:3333/buy_candy
+{"change":0,"thanks":"Thank you!"}
+```
+
+2. Implement a certificate authentication for the server as well as a test client which will be able to query your API using a self-signed certificate and a local security authority to "verify" it on both sides.
+
+Need a local "certificate authority" to manage certificates e.g.: [minica](https://github.com/jsha/minica).
+
+So, because we're talking a full-blown mutual TLS authentication, you'll have to generate two cert/key pairs - one for the server and one for the client. Minica will also generate a CA file called `minica.pem` for you which you'll need to plug into your client somehow (your auto-generated server should already support specifying CA file as well as `key.pem` and `cert.pem` through command line parameters).
+Also, generating certificate may require you to use a domain instead of an IP address, so in examples below we will use "candy.tld". For it to work on a local machine you can put it into '/etc/hosts' file.
+
+Your test client should support flags '-k' (accepts two-letter abbreviation for the candy type), '-c' (count of candy to buy) and '-m' (amount of money you "gave to machine"). So, the "buying request" should look like this:
+
+```
+~$ ./candy-client -k AA -c 2 -m 50
+Thank you! Your change is 20
+```
+
+3. Import C to Go with for **Cow say**
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+unsigned int i;
+unsigned int argscharcount = 0;
+
+char *ask_cow(char phrase[]) {
+  int phrase_len = strlen(phrase);
+  char *buf = (char *)malloc(sizeof(char) * (160 + (phrase_len + 2) * 3));
+  strcpy(buf, " ");
+
+  for (i = 0; i < phrase_len + 2; ++i) {
+    strcat(buf, "_");
+  }
+
+  strcat(buf, "\n< ");
+  strcat(buf, phrase);
+  strcat(buf, " ");
+  strcat(buf, ">\n ");
+
+  for (i = 0; i < phrase_len + 2; ++i) {
+    strcat(buf, "-");
+  }
+  strcat(buf, "\n");
+  strcat(buf, "        \\   ^__^\n");
+  strcat(buf, "         \\  (oo)\\_______\n");
+  strcat(buf, "            (__)\\       )\\/\\\n");
+  strcat(buf, "                ||----w |\n");
+  strcat(buf, "                ||     ||\n");
+  return buf;
+}
+
+int main(int argc, char *argv[]) {
+  for (i = 1; i < argc; ++i) {
+    argscharcount += (strlen(argv[i]) + 1);
+  }
+  argscharcount = argscharcount + 1;
+
+  char *phrase = (char *)malloc(sizeof(char) * argscharcount);
+  strcpy(phrase, argv[1]);
+
+  for (i = 2; i < argc; ++i) {
+    strcat(phrase, " ");
+    strcat(phrase, argv[i]);
+  }
+  char *cow = ask_cow(phrase);
+  printf("%s", cow);
+  free(phrase);
+  free(cow);
+  return 0;
+}
+```
+
+```console
+$ curl -s --key cert/client/key.pem --cert cert/client/cert.pem --cacert cert/minica.pem -XPOST -H "Content-Type: application/json" -d '{"candyType": "NT", "candyCount": 2, "money": 34}' "https://candy.tld:3333/buy_candy"
+{"change":0,"thanks":" ____________\n< Thank you! >\n ------------\n        \\   ^__^\n         \\  (oo)\\_______\n            (__)\\       )\\/\\\n                ||----w |\n                ||     ||\n"}
+
+```
+
+> **Hint:** > For creating `candy.tld:3333` instead of `127.0.0.1:3333` need to take following steps:
+> 1) sudo nano /etc/hosts
+> 2) add "127.0.0.1 candy.tld"
