@@ -1,9 +1,27 @@
-# go-pool
-Daily tasks from bootcamp in School 21 written in Go
+<div align="center">
+    <h1>Go-pool</h1>
+    <h5>
+        Daily tasks from bootcamp in School 21 written in Go
+    </h5>
+</div>
+
+## Navigation
+* **[Day00](#day00)**
+* **[Day01](#day01)**
+* **[Day02](#day02)**
+* **[Day03](#day03)**
+* **[Day04](#day04)**
+* **[Day05](#day05)**
+* **[Day06](#day06)**
+* **[Day07](#day07)**
+* **[Day08](#day08)**
+* **[Day09](#day09)**
+* **[Team00](#team00)**
+  
 
 ## Day00
 ### Task 
-Implement application for read large set of integers between-100000 and 100000, separated by newlines, from Stdin. 
+Implement application for read large set of integers between `-100000` and `100000`, separated by newlines, from Stdin. 
 After that count four major statistical metrics and print all of them as a result.
 Additionally, handle flags to display specials of the statistical metrics.
 
@@ -300,9 +318,7 @@ $ curl -s -XGET "http://127.0.0.1:8888/api/recommend?lat=55.674&lon=37.666"
 }
 ```
 
-6. Provide some simple form of authentication.
-
-Currently the one of the most popular ways of implementing that for an API is by using [JWT](https://jwt.io/introduction/).
+6. Provide some simple form of authentication with protecting `/api/recommend` endpoint with a [JWT](https://jwt.io/introduction/) middleware, that will check the validity of this token.
 
 Implement an API endpoint `http://127.0.0.1:8888/api/get_token` which sole purpose will be to generate a token and return it, like this (this is an example, your token will likely be different):
 
@@ -312,10 +328,12 @@ $ curl -s -XGET "http://127.0.0.1:8888/api/get_token"
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNjAxOTc1ODI5LCJuYW1lIjoiTmlrb2xheSJ9.FqsRe0t9YhvEC3hK1pCWumGvrJgz9k9WvhJgO8HsIa8"
 }
 ```
-Set header 'Content-Type: application/json'. Protect your `/api/recommend` endpoint with a JWT middleware, that will check the validity of this token.
+So by default when querying this API from the browser it should now fail with an **HTTP 401** error, but work when `Authorization: Bearer <token>` header is specified by the client.
 
-So by default when querying this API from the browser it should now fail with an HTTP 401 error, but work when `Authorization: Bearer <token>` header is specified by the client (you may check this using cURL or Postman).
+### Lessons Learnt
 
+1. Worked with **ElasticSearh**, **JWT**.
+2. Implemented simple API with AUTH.
 
 ## Day04
 ### Task 
@@ -387,9 +405,9 @@ Every candy buyer puts in money, chooses which kind of candy to purchase and how
 2) If the sum is larger that the amount of money provided, the server responds with **HTTP 402** and an error message in JSON saying:
 `"You need {amount} more money!"`,
 where `{amount}` is the difference between the provided and expected.
-4) If the client provided a negative candyCount or wrong candyType (all five candy types are encoded by two letters, so it's one of "CE", "AA", "NT", "DE" or "YR", all other cases are considered non-valid) then the server should respond with **HTTP 400** and an error inside JSON describing what had gone wrong. You can actually do it in two different ways - it's either write the code manually with these checks or modify the Swagger spec above so it would cover these cases.
+4) If the client provided a negative candyCount or wrong candyType (all five candy types are encoded by two letters, so it's one of "CE", "AA", "NT", "DE" or "YR", all other cases are considered non-valid) then the server respond with **HTTP 400** and an error inside JSON describing what had gone wrong.
 
-> **Hint:** all data from both client and server should be in JSON, so you can test your server like this, for example:
+> **Hint:** all data from both client and server should be in JSON, so you can test like this, for example:
 
 ```console
 $ curl -XPOST -H "Content-Type: application/json" -d '{"money": 20, "candyType": "AA", "candyCount": 1}' http://127.0.0.1:3333/buy_candy
@@ -480,3 +498,123 @@ $ curl -s --key cert/client/key.pem --cert cert/client/cert.pem --cacert cert/mi
 > **Hint:** > For creating `candy.tld:3333` instead of `127.0.0.1:3333` need to take following steps:
 > 1) sudo nano /etc/hosts
 > 2) add "127.0.0.1 candy.tld"
+
+### Lessons Learnt
+
+1. Worked with TLS server/client.
+2. Worked with C from Go.
+
+
+## Day05
+### Task 
+
+1. Write a function `areToysBalanced` which will receive a pointer to a tree root as an argument. The point is to spit out a true/false boolean value depending on if left subtree has the same amount of toys as the right one. The value on the root itself can be ignored. 
+Function should return `true` for such trees (0/1 represent false/true, equal amount of 1's on both subtrees):
+   
+[Binary tree](https://en.wikipedia.org/wiki/Binary_tree) node:
+
+```go
+type TreeNode struct {
+    HasToy bool
+    Left *TreeNode
+    Right *TreeNode
+}
+```
+
+```
+    0
+   / \
+  0   1
+ / \
+0   1
+```
+and `false` for such trees (non-equal amount of 1's on both subtrees):
+
+```
+  1
+ / \
+1   0
+```
+
+2.  Write function called `unrollGarland()`, which also receives a pointer to a root node. The idea is to go top down, layer by layer, going right on even horisontal layers and going left on every odd. The returned value of this function should be a slice of bools. So, for this tree:
+
+```
+    1
+   /  \
+  1     0
+ / \   / \
+1   0 1   1
+```
+The answer will be [true, true, false, true, true, false, true] (root is true, then on second level we go from left to right, and then on third from right to left, like a zig-zag).
+
+3. Implement a function `getNCoolestPresents()`, that, given an unsorted slice of Presents and an integer `n`, will return a sorted slice (desc) of the "coolest" ones from the list.
+It should use the PresentHeap data structure inside and return an error if `n` is larger than the size of the slice or is negative.
+
+```go
+type Present struct {
+    Value int
+    Size int
+}
+```
+
+So, if we represent each Present by a tuple of two numbers (Value, Size), then for this input:
+
+```
+(5, 1)
+(4, 5)
+(3, 1)
+(5, 2)
+```
+the two "coolest" Presents would be [(5, 1), (5, 2)], because the first one has the smaller size of those two with Value = 5.
+
+4. Implement a classic dynamic programming algorithm, also known as "Knapsack Problem". Input is almost the same, as in the previous task - you have a slice of Presents, each with Value and Size, but this time you also have a hard drive with a limited capacity. So, you have to pick only those presents, that fit into that capacity and maximize the resulting value.
+Write a function `grabPresents()`, that receives a slice of Present instances and a capacity of your hard drive. As an output, this function should give out another slice of Presents, which should have a maximum cumulative Value that you can get with such capacity.
+
+**Run tests**
+```shell
+make test
+```
+
+### Lessons Learnt
+
+1. Wordked with data structure (Binary tree, Heap).
+2. Worked with [DFS](https://en.wikipedia.org/wiki/Depth-first_search), [BFS](https://en.wikipedia.org/wiki/Breadth-first_search), [Knapstack problem](https://en.wikipedia.org/wiki/Knapsack_problem).
+
+
+## Day06
+### Task 
+
+1. Generate 300x300px PNG file with name 'amazing_logo.png'. Image should appear in the same directory as the launched binary executable after compiling.
+2. Create a website (blog where everybody will be able to read ideas on the world improvement). Here is a list of features it should have:
+
+- Database: [PostgreSQL](https://www.postgresql.org/);
+- Admin panel: (on '/admin' endpoint) where only you can login with just a form for posting new articles;
+- Basic markdown support (so it can at least show "###" headers and links in generated HTML);
+- Pagination (show no more than 3 thoughts on one page for people to not get too much of your awesomeness);
+- Application UI should use port 8888.
+- Admin credentials for posting access (login and password) and database credentials (database name and user) should be submitted separately as well in a file called *admin_credentials.txt*.
+- When clicking a link to article, user should get to a page with a rendered markdown text and a single "Back" link which brings him/her back to main page.
+- Protect from 
+3. Implement rate limiting, so if ther are more than a hundred clients per second trying to access it, they should get a **429 Too Many Requests** response.
+
+
+**Run app**
+```shell
+make run-srv
+```
+
+## Day07
+### Task 
+
+1. Implement `mincoins` algorithm.
+2. Test it with `_test.go`.
+
+## Day08
+### Task 
+
+1. Working with `reflect`
+
+## Day09
+### Task 
+
+1. Working with channels. `Fan-in` && `Fan-out` patterns.
